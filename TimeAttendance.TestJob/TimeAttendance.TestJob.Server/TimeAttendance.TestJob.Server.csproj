@@ -4,14 +4,17 @@
     <TargetFramework>net6.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>b824837b-7e8d-4a76-8e40-a3760581878c</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Controllers\" />
+    <ProjectReference Include="..\TimeAttendance.TestJob.BLL\TimeAttendance.TestJob.BLL.csproj" />
+    <ProjectReference Include="..\TimeAttendance.TestJob.DAL\TimeAttendance.TestJob.DAL.csproj" />
   </ItemGroup>
 
 </Project>

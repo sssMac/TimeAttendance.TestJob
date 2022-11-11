@@ -1,14 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace TimeAttendance.TestJob.DAL.Entities
+namespace TimeAttendance.TestJob.DAL.Models
 {
-    public class Task
+    public class SmallTask
     {
         public Guid Id { get; set; }
+
+        [Required]
+        [StringLength(255)]
         public string? TaskName { get; set; }
         public Guid ProjectId { get; set; }
         public DateTime StartDate { get; set; }
