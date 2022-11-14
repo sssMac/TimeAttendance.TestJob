@@ -11,7 +11,8 @@ import {HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
 import {FETCH_TYPE, fetchAPI} from "../../services/API";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
-
+import {encode, decode} from 'uint8-to-base64';
+import axios from "axios";
 const AddTask = (props) => {
     const [projects, setProjects] = useState([]);
     const [type, setType] = useState("")
@@ -48,6 +49,24 @@ const AddTask = (props) => {
         }
     }, [connection]);
 
+    async function getAsByteArray(file) {
+        return new Uint8Array(await readFile(file));
+
+    }
+    async function readFile(file) {
+        return new Promise((resolve, reject) => {
+            // Create file reader
+            let reader = new FileReader()
+
+            // Register event listeners
+            reader.addEventListener("loadend", e => resolve(e.target.result))
+            reader.addEventListener("error", reject)
+
+            // Read file
+            reader.readAsArrayBuffer(file)
+        })
+    }
+
     const formik = useFormik({
         initialValues:{
             taskName: "",
@@ -70,11 +89,27 @@ const AddTask = (props) => {
             commType: yup.string(),
         }),
         onSubmit: async function () {
-            console.log(formik.values)
-            if (connection){
-                await connection.send("SendTaskObj", formik.values);}
+            console.log(formik.values.comm)
+            //if (connection){
+            //    await connection.send("SendTaskObj",
+            //        formik.values.taskName,
+            //        formik.values.project,
+            //        formik.values.startDate,
+            //        formik.values.endDate,
+            //        formik.values.commType,
+            //        formik.values.comm
+            //        )}
+            //formik.resetForm();
 
-            formik.resetForm();
+            await axios.post(
+                `https://localhost:7123/api/Task/addnewcomment`, formik.values.comm
+            ).then(res => {
+                console.log(res);
+                console.log(res.data);
+            })
+
+            //if (connection){
+            //    await connection.send("SendTaskObj", formik.values)}
         },
 
     })
@@ -169,7 +204,7 @@ const AddTask = (props) => {
                             onChange={e => {
                                 type === "text" ?
                                     formik.handleChange(e)
-                                    : formik.setFieldValue("comm", e.target.files[0])
+                                    : formik.setFieldValue("comm",e.target.files[0])
                             }}
                             onBlur={formik.handleBlur}
                             isInvalid={!!formik.errors.comm}

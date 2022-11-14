@@ -142,9 +142,9 @@ namespace TimeAttendance.TestJob.Server.Controllers
         }
 
         [HttpPost("addnewcomment")]
-        public async Task<ActionResult> PostNewTaskComments(TaskComments taskCom)
+        public async Task<ActionResult> PostNewTaskComments(IFormFile taskCom)
         {
-            await _taskCommentsService.AddTaskComments(taskCom);
+            //await _taskCommentsService.AddTaskComments(taskCom);
             return Ok();
         }
 

@@ -8,6 +8,7 @@ namespace TimeAttendance.TestJob.Server.Configurations
         {
 
             app.MapHub<TCPHub>("/websocket");
+
             return app;
         }
     }
