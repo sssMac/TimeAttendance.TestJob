@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using TimeAttendance.TestJob.DAL.Data;
 using TimeAttendance.TestJob.Server.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);

@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+using TimeAttendance.TestJob.DAL.Interfaces;
 
 namespace TimeAttendance.TestJob.DAL.Models
 {
-    public class Project
+    public class Project : IDBModel
     {
         public Guid Id { get; set; }
 

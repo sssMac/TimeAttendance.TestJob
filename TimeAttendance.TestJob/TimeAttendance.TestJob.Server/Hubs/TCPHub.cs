@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using System.Text;
+using System.Text.Json;
 using TimeAttendance.TestJob.BLL.Interfaces;
 using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.Server.Hubs.SignalRModels;
 
 namespace TimeAttendance.TestJob.Server.Hubs
 {
@@ -16,9 +19,30 @@ namespace TimeAttendance.TestJob.Server.Hubs
             _taskCommentsService = taskCommentsService;
         }
 
-        public async Task SendTaskObj(SmallTask obj)
+        public async Task SendTaskObj(JsonElement obj) 
         {
-            var response = await _taskService.AddTask(obj);
+            var model = obj.Deserialize<TaskR>();
+
+            var task = new SmallTask
+            {
+                Id = Guid.NewGuid(),
+                ProjectId = Guid.Parse(model.project),
+                TaskName = model.taskName,
+                StartDate = DateTime.Today.Add(TimeSpan.Parse(model.startDate)),
+                CancelDate = DateTime.Today.Add(TimeSpan.Parse(model.endDate)),
+                CreateDate = DateTime.Now,
+                DeleteDate = default
+            };
+
+            var comment = new TaskComments
+            {
+                Id = Guid.NewGuid(),
+                TaskId = task.Id,
+                CommentType = model.commType == "file" ? (byte)0 : (byte)1, 
+                //Content = Encoding.ASCII.GetBytes(model.comm)
+        };
+
+            //var response = await _taskService.AddTask(obj);
             await Clients.All.SendAsync("ReceiveTask", obj);
         }
 

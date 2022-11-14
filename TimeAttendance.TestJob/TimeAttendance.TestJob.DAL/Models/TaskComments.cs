@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using TimeAttendance.TestJob.DAL.Interfaces;
 
 namespace TimeAttendance.TestJob.DAL.Models
 {
-    public class TaskComments
+    public class TaskComments : IDBModel
     {
         public Guid Id { get; set; }
         public Guid TaskId { get; set; }

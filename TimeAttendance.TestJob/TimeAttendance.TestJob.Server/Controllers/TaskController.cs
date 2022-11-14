@@ -12,18 +12,34 @@ namespace TimeAttendance.TestJob.Server.Controllers
         private readonly ITaskService _taskService;
         private readonly ITaskCommentsService _taskCommentsService;
 
-        public TaskController(ITaskService projectService, ITaskCommentsService taskCommentsService)
+        public TaskController(ITaskService taskService, ITaskCommentsService taskCommentsService)
         {
-            _taskService = projectService;
+            _taskService = taskService;
             _taskCommentsService = taskCommentsService;
         }
 
+        #region Task
         [HttpGet("tasklist")]
-        public async Task<ActionResult> GetTaskList()
+        public async Task<ActionResult> GetTaskList(Guid id)
         {
             try
             {
-                return Ok(await _taskService.GetAllTasks());
+                var tasks = await _taskService.GetAllTasks();
+                var comments = await _taskCommentsService.GetAllTaskComments();
+
+                var res = from task in tasks
+                          where task.ProjectId == id
+                          join com in comments
+                          on task.Id equals com.TaskId
+                          into Task
+                          from comme in Task.DefaultIfEmpty()
+                          select new { task, comme };
+
+
+                //int skipPage = (pageNo - 1) * 5;
+                //res = res.Skip(skipPage).Take(5);
+
+                return Ok(res);
             }
             catch (Exception)
             {
@@ -31,6 +47,13 @@ namespace TimeAttendance.TestJob.Server.Controllers
                     "Error retrieving data from the database");
             }
 
+        }
+
+        [HttpPost("addnewtask")]
+        public async Task<ActionResult> PostNewTask(SmallTask task)
+        {
+            await _taskService.AddTask(task);
+            return Ok();
         }
 
         [HttpGet("task")]
@@ -100,7 +123,9 @@ namespace TimeAttendance.TestJob.Server.Controllers
                     "Error updating data");
             }
         }
+        #endregion
 
+        #region Comments
         [HttpGet("taskcommentslist")]
         public async Task<ActionResult> GetTaskCommentsList()
         {
@@ -114,6 +139,13 @@ namespace TimeAttendance.TestJob.Server.Controllers
                     "Error retrieving data from the database");
             }
 
+        }
+
+        [HttpPost("addnewcomment")]
+        public async Task<ActionResult> PostNewTaskComments(TaskComments taskCom)
+        {
+            await _taskCommentsService.AddTaskComments(taskCom);
+            return Ok();
         }
 
         [HttpGet("taskcomments")]
@@ -183,6 +215,6 @@ namespace TimeAttendance.TestJob.Server.Controllers
                     "Error updating data");
             }
         }
-
+        #endregion
     }
 }

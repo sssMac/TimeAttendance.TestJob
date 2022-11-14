@@ -31,6 +31,13 @@ namespace TimeAttendance.TestJob.Server.Controllers
             
         }
 
+        [HttpPost]
+        public async Task<IActionResult> PostNewProject(Project model)
+        {
+            await _projectService.AddProject(model);
+            return Ok();
+        }
+
         [HttpGet("project")]
         public async Task<ActionResult<Project>> GetProject(Guid id)
         {

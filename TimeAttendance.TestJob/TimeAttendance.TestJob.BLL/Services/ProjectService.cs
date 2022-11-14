@@ -41,7 +41,7 @@ namespace TimeAttendance.TestJob.BLL.Services
                 var result = (await _repository.GetAllAsync()).Where(x => x.Id == id).FirstOrDefault();
                 if (result != null)
                 {
-                    await _repository.DeleteAsync(result);
+                    await _repository.DeleteAsync(result.Id);
                     await _repository.SaveAsync();
                     return result;
                 }

@@ -11,7 +11,7 @@ using TimeAttendance.TestJob.DAL.Models;
 
 namespace TimeAttendance.TestJob.DAL.Repository
 {
-    public class Repository<T> : IRepository<T> where T : class
+    public class Repository<T> : IRepository<T> where T : class , IDBModel
     {
         private readonly ApplicationContext _db;
         private DbSet<T> table;
