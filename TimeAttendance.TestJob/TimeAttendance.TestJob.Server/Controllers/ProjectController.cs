@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TimeAttendance.TestJob.BLL.Interfaces;
-using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.DAL.Models.Entities;
 
 namespace TimeAttendance.TestJob.Server.Controllers
 {

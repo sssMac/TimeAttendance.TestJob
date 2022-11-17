@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TimeAttendance.TestJob.BLL.Interfaces;
 using TimeAttendance.TestJob.DAL.Interfaces;
-using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.DAL.Models.Entities;
 
 namespace TimeAttendance.TestJob.BLL.Services
 {

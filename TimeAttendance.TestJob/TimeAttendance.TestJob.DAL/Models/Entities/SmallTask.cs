@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using TimeAttendance.TestJob.DAL.Interfaces;
 
-namespace TimeAttendance.TestJob.DAL.Models
+namespace TimeAttendance.TestJob.DAL.Models.Entities
 {
     public class SmallTask : IDBModel
     {

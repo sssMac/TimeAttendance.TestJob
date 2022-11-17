@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using TimeAttendance.TestJob.BLL.Interfaces;
-using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.DAL.Models.Entities;
+using TimeAttendance.TestJob.DAL.Models.ViewModels;
+using TimeAttendance.TestJob.Server.Hubs;
 
 namespace TimeAttendance.TestJob.Server.Controllers
 {
@@ -10,12 +13,12 @@ namespace TimeAttendance.TestJob.Server.Controllers
     public class TaskController : ControllerBase
     {
         private readonly ITaskService _taskService;
-        private readonly ITaskCommentsService _taskCommentsService;
+        private readonly IHubContext<TaskHub> _hubContext;
 
-        public TaskController(ITaskService taskService, ITaskCommentsService taskCommentsService)
+        public TaskController(ITaskService taskService, IHubContext<TaskHub> hubContext)
         {
             _taskService = taskService;
-            _taskCommentsService = taskCommentsService;
+            _hubContext = hubContext;
         }
 
         #region Task
@@ -24,8 +27,8 @@ namespace TimeAttendance.TestJob.Server.Controllers
         {
             try
             {
-                var tasks = await _taskService.GetAllTasks();
-                var comments = await _taskCommentsService.GetAllTaskComments();
+                var tasks = (await _taskService.GetAllTasks());
+                var comments = await _taskService.GetAllComments();
 
                 var res = from task in tasks
                           where task.ProjectId == id
@@ -34,10 +37,6 @@ namespace TimeAttendance.TestJob.Server.Controllers
                           into Task
                           from comme in Task.DefaultIfEmpty()
                           select new { task, comme };
-
-
-                //int skipPage = (pageNo - 1) * 5;
-                //res = res.Skip(skipPage).Take(5);
 
                 return Ok(res);
             }
@@ -49,26 +48,46 @@ namespace TimeAttendance.TestJob.Server.Controllers
 
         }
 
-        [HttpPost("addnewtask")]
-        public async Task<ActionResult> PostNewTask(SmallTask task)
-        {
-            await _taskService.AddTask(task);
-            return Ok();
-        }
 
-        [HttpGet("task")]
-        public async Task<ActionResult<SmallTask>> GetTask(Guid id)
+        [HttpPost("addnewtask")]
+        public async Task<ActionResult> PostNewTask([FromForm]AddTask task)
         {
             try
             {
-                var result = await _taskService.GetTaskById(id);
+                var result = await _taskService.AddTask(task);
 
                 if (result == null)
                 {
                     return NotFound();
                 }
+                await _hubContext.Clients.All.SendAsync("TaskMessage", result);
+                return Ok(result.task);
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    "Error retrieving data from the database");
+            }
+            return Ok();
+        }
 
-                return result;
+        [HttpGet("task")]
+        public async Task<ActionResult> GetTask(Guid id)
+        {
+            try
+            {
+                var tasks = await _taskService.GetAllTasks();
+                var comments = await _taskService.GetAllComments();
+
+                var res = from task in tasks
+                          where task.Id == id
+                          join com in comments
+                          on task.Id equals com.TaskId
+                          into Task
+                          from comme in Task.DefaultIfEmpty()
+                          select new { task, comme };
+
+                return Ok(res);
             }
             catch (Exception)
             {
@@ -98,24 +117,13 @@ namespace TimeAttendance.TestJob.Server.Controllers
             }
         }
 
-        [HttpPut("updateptask")]
-        public async Task<ActionResult<SmallTask>> UpdateTask(Guid id, SmallTask task)
+        [HttpPut("updatetask")]
+        public async Task<ActionResult> UpdateTask([FromForm]UpdateTask task)
         {
             try
             {
-                if (id != task.Id)
-                {
-                    return BadRequest("Task ID mismatch");
-                }
-
-                var taskToUpdate = await _taskService.GetTaskById(id);
-
-                if (taskToUpdate == null)
-                {
-                    return NotFound($"Task with Id = {id} not found");
-                }
-
-                return await _taskService.UpdateTask(task);
+                var res = await _taskService.UpdateTask(task);
+                return Ok(res);
             }
             catch (Exception)
             {
@@ -131,7 +139,7 @@ namespace TimeAttendance.TestJob.Server.Controllers
         {
             try
             {
-                return Ok(await _taskCommentsService.GetAllTaskComments());
+                return Ok(await _taskService.GetAllComments());
             }
             catch (Exception)
             {
@@ -141,80 +149,6 @@ namespace TimeAttendance.TestJob.Server.Controllers
 
         }
 
-        [HttpPost("addnewcomment")]
-        public async Task<ActionResult> PostNewTaskComments(IFormFile taskCom)
-        {
-            //await _taskCommentsService.AddTaskComments(taskCom);
-            return Ok();
-        }
-
-        [HttpGet("taskcomments")]
-        public async Task<ActionResult<TaskComments>> GetTaskComments(Guid id)
-        {
-            try
-            {
-                var result = await _taskCommentsService.GetTaskCommentsById(id);
-
-                if (result == null)
-                {
-                    return NotFound();
-                }
-
-                return result;
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Error retrieving data from the database");
-            }
-        }
-
-        [HttpDelete("deletetaskcomments")]
-        public async Task<ActionResult<TaskComments>> DeleteTaskComments(Guid id)
-        {
-            try
-            {
-                var taskCommentsToDelete = await _taskCommentsService.GetTaskCommentsById(id);
-
-                if (taskCommentsToDelete == null)
-                {
-                    return NotFound($"TaskComments with Id = {id} not found");
-                }
-
-                return await _taskCommentsService.DeleteTaskComments(id);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Error deleting data");
-            }
-        }
-
-        [HttpPut("updateptaskcomments")]
-        public async Task<ActionResult<TaskComments>> UpdateTaskComments(Guid id, TaskComments taskComments)
-        {
-            try
-            {
-                if (id != taskComments.Id)
-                {
-                    return BadRequest("TaskComments ID mismatch");
-                }
-
-                var taskCommentsToUpdate = await _taskCommentsService.GetTaskCommentsById(id);
-
-                if (taskCommentsToUpdate == null)
-                {
-                    return NotFound($"TaskComments with Id = {id} not found");
-                }
-
-                return await _taskCommentsService.UpdateTaskComments(taskComments);
-            }
-            catch (Exception)
-            {
-                return StatusCode(StatusCodes.Status500InternalServerError,
-                    "Error updating data");
-            }
-        }
         #endregion
     }
 }

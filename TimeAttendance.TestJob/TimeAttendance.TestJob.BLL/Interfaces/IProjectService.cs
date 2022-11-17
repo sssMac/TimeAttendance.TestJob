@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.DAL.Models.Entities;
 
 namespace TimeAttendance.TestJob.BLL.Interfaces
 {

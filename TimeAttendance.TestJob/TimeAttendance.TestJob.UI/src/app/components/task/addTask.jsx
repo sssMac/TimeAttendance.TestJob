@@ -5,111 +5,61 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Select from 'react-bootstrap/FormSelect';
 import "../../styles/addTask.scss"
 import Form from 'react-bootstrap/Form';
-import TimePicker from 'react-time-picker';
-import moment, {defaultFormat} from "moment";
-import {HubConnection, HubConnectionBuilder} from "@microsoft/signalr";
-import {FETCH_TYPE, fetchAPI} from "../../services/API";
+import moment from "moment";
 import Modal from "react-bootstrap/Modal";
 import Button from "react-bootstrap/Button";
-import {encode, decode} from 'uint8-to-base64';
 import axios from "axios";
+import {FETCH_TYPE, fetchAPI} from "../../services/API";
+
 const AddTask = (props) => {
     const [projects, setProjects] = useState([]);
     const [type, setType] = useState("")
-
-    const latestTask = useRef(null)
-    const [connection, setConnection] = useState();
-
+    const latestTask = useRef(null);
+    latestTask.current = props.tasks;
     useEffect(() => {
         fetchAPI(FETCH_TYPE.Projects)
-            .then(r => setProjects(r.data))
-
-        const connect = new HubConnectionBuilder()
-            .withUrl("https://localhost:7123/websocket")
-            .withAutomaticReconnect()
-            .build();
-
-        setConnection(connect);
+            .then(r => {
+                setProjects(r.data)
+            })
     }, []);
-
-    useEffect(() => {
-        if (connection) {
-            connection
-                .start()
-                .then(() => {
-                    connection.on("ReceiveTask", (task) => {
-                        const updatedTable = [...latestTask.current];
-                        updatedTable.push(task);
-
-                        setProjects(updatedTable);
-                        console.log(task)
-                    });
-                })
-                .catch((error) => console.log(error));
-        }
-    }, [connection]);
-
-    async function getAsByteArray(file) {
-        return new Uint8Array(await readFile(file));
-
-    }
-    async function readFile(file) {
-        return new Promise((resolve, reject) => {
-            // Create file reader
-            let reader = new FileReader()
-
-            // Register event listeners
-            reader.addEventListener("loadend", e => resolve(e.target.result))
-            reader.addEventListener("error", reject)
-
-            // Read file
-            reader.readAsArrayBuffer(file)
-        })
-    }
 
     const formik = useFormik({
         initialValues:{
             taskName: "",
-            project: "",
+            projectId: "",
             startDate: new Date().setHours(0,0),
-            endDate: new Date().setHours(24,0),
-            commType : "",
-            comm: ""
+            cancelDate: new Date().setHours(22,0),
+            commentType : "",
+            stringContent: "",
+            fileContent: ""
         },validationSchema: yup.object({
             taskName: yup.string().required("task name cannot be empty").max(255),
-            project: yup.string().required("project cannot be empty").max(255),
+            projectId: yup.string().required("project cannot be empty").max(255),
             startDate: yup.string().required("start time cannot be empty"),
-            endDate: yup
+            cancelDate: yup
                 .string()
                 .required("end time cannot be empty")
                 .test("is-greater", "end time should be greater", function(value) {
                     const { startDate } = this.parent;
                     return moment(value, "HH:mm").isSameOrAfter(moment(startDate, "HH:mm"));
                 }),
-            commType: yup.string(),
+            commentType: yup.string(),
         }),
         onSubmit: async function () {
-            console.log(formik.values.comm)
-            //if (connection){
-            //    await connection.send("SendTaskObj",
-            //        formik.values.taskName,
-            //        formik.values.project,
-            //        formik.values.startDate,
-            //        formik.values.endDate,
-            //        formik.values.commType,
-            //        formik.values.comm
-            //        )}
-            //formik.resetForm();
-
+            console.log(formik.values)
+            const formData = new FormData();
+            formData.append("taskName", formik.values.taskName);
+            formData.append("projectId", formik.values.projectId);
+            formData.append("startDate", formik.values.startDate);
+            formData.append("cancelDate", formik.values.cancelDate);
+            formData.append("commentType", formik.values.commentType);
+            formData.append("stringContent", formik.values.stringContent);
+            formData.append("fileContent", formik.values.fileContent);
             await axios.post(
-                `https://localhost:7123/api/Task/addnewcomment`, formik.values.comm
+                `https://localhost:7123/api/Task/addnewtask`, formData
             ).then(res => {
-                console.log(res);
-                console.log(res.data);
+                console.log(res)
             })
-
-            //if (connection){
-            //    await connection.send("SendTaskObj", formik.values)}
         },
 
     })
@@ -137,11 +87,11 @@ const AddTask = (props) => {
                         <Form.Label>Project</Form.Label>
                         <Select
                             className="input"
-                            name="project"
+                            name="projectId"
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            value={formik.values.project}
-                            isInvalid={!!formik.errors.project}
+                            value={formik.values.projectId}
+                            isInvalid={!!formik.errors.projectId}
 
                         >
                             <option value="" label='Choose project...'> </option>
@@ -154,7 +104,7 @@ const AddTask = (props) => {
                                     </option>)
                             }
                         </Select>
-                        <Form.Control.Feedback type="invalid">{formik.errors.project}</Form.Control.Feedback>
+                        <Form.Control.Feedback type="invalid">{formik.errors.projectId}</Form.Control.Feedback>
 
                         <Form.Label>Start</Form.Label>
                         <Form.Control
@@ -171,22 +121,23 @@ const AddTask = (props) => {
                         <Form.Label>End</Form.Label>
                         <Form.Control
                             type="time"
-                            name="endDate"
+                            name="cancelDate"
                             onChange={formik.handleChange}
                             onBlur={formik.handleBlur}
-                            value={formik.values.endDate}
-                            isInvalid={!!formik.errors.endDate}
+                            value={formik.values.cancelDate}
+                            isInvalid={!!formik.errors.cancelDate}
                             autoComplete="off"
                         />
-                        <Form.Control.Feedback type="invalid">{formik.errors.endDate}</Form.Control.Feedback>
+                        <Form.Control.Feedback type="invalid">{formik.errors.cancelDate}</Form.Control.Feedback>
                         <Form.Label>Type of comment</Form.Label>
                         <Select
                             className="input"
-                            name="commType"
+                            name="commentType"
                             onChange={(e) => {
                                 formik.handleChange(e)
                                 setType(e.target.value)
-                                formik.values.comm = ""
+                                formik.values.stringContent = ""
+                                formik.values.fileContent = ""
                             }}
                             onBlur={formik.handleBlur}
                             value={type}
@@ -197,27 +148,34 @@ const AddTask = (props) => {
                         </Select>
                         <Form.Label>Comment</Form.Label>
                         <Form.Control
-                            type={type}
+                            type={type === "text" ? type : "hidden"}
                             as={type === "text" ? "textarea" : "input"}
-                            name="comm"
-                            disabled={type === ""}
-                            onChange={e => {
-                                type === "text" ?
-                                    formik.handleChange(e)
-                                    : formik.setFieldValue("comm",e.target.files[0])
-                            }}
+                            name="stringContent"
+                            disabled={type !== "text"}
+                            onChange={e => { formik.setFieldValue("stringContent",e.target.value)}}
                             onBlur={formik.handleBlur}
-                            isInvalid={!!formik.errors.comm}
+                            isInvalid={!!formik.errors.stringContent }
+                            autoComplete="off"
+
+                        />
+                        <Form.Control
+                            type={type === "file" ? type : "hidden"}
+                            as="input"
+                            name="fileContent"
+                            disabled={type !== "file"}
+                            onChange={e => { formik.setFieldValue("fileContent",e.target.files[0])}}
+                            onBlur={formik.handleBlur}
+                            isInvalid={!!formik.errors.fileContent}
                             autoComplete="off"
                         />
                     </Form.Group>
-                    <Form.Control.Feedback type="invalid">{formik.errors.comm}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formik.errors.stringContent}</Form.Control.Feedback>
+                    <Form.Control.Feedback type="invalid">{formik.errors.fileContent}</Form.Control.Feedback>
 
                 </Modal.Body>
                 <Modal.Footer>
                     <Button variant="success" type="submit" >Create</Button>
-                    <Button onClick={() => {
-                    }}>Close</Button>
+                    <Button onClick={() => { props.setModalShow(false) }}>Close</Button>
                 </Modal.Footer>
             </form>
         </div>

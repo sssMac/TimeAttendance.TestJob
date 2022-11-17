@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import Select from "react-bootstrap/FormSelect";
 import Button from "react-bootstrap/Button";
 import MyModal from "../modal/modal";
@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 
 const TasksAction = (props) => {
     const [modalShow, setModalShow] = useState(false);
+
 
     return (
         <div className="actions">
@@ -32,7 +33,7 @@ const TasksAction = (props) => {
             <MyModal
                 show={modalShow}
                 onHide={() => setModalShow(false)}
-                child={<AddTask key={props.projects.length} onHide={() => setModalShow(false)} />}
+                child={<AddTask key={props.projects.length} tasks={props.tasks} setTasks={props.setTasks} setModalShow={setModalShow} onHide={() => setModalShow(false)} />}
             />
         </div>
     );

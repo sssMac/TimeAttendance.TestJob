@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using TimeAttendance.TestJob.DAL.Models;
+using TimeAttendance.TestJob.DAL.Models.Entities;
 
 namespace TimeAttendance.TestJob.DAL.Data
 {

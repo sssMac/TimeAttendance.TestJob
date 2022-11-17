@@ -8,6 +8,7 @@
 
             return services;
         }
+
         public static WebApplication SwaggerConfigure(this WebApplication app)
         {
             if (app.Environment.IsDevelopment())
